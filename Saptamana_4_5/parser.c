@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdbool.h>
-//Git Commit
 #include "parser.h"
 
 Token *iTk;        // iterator in lista de atomi
@@ -364,7 +363,7 @@ bool exprOrPrim()
     return true;
 }
 
-// exprAnd: exprEq exprAndPrim (implicit transformation)
+// exprAnd: exprEq exprAndPrim 
 bool exprAnd()
 {
     Token *start = iTk;
@@ -383,7 +382,7 @@ bool exprAnd()
     return false;
 }
 
-// exprEq: exprRel exprEqPrim (implicit transformation)
+// exprEq: exprRel exprEqPrim 
 bool exprEq()
 {
     Token *start = iTk;
@@ -402,7 +401,7 @@ bool exprEq()
     return false;
 }
 
-// exprRel: exprAdd exprRelPrim (implicit transformation)
+// exprRel: exprAdd exprRelPrim 
 bool exprRel()
 {
     Token *start = iTk;
@@ -421,7 +420,7 @@ bool exprRel()
     return false;
 }
 
-// exprAdd: exprMul exprAddPrim (implicit transformation)
+// exprAdd: exprMul exprAddPrim 
 bool exprAdd()
 {
     Token *start = iTk;
@@ -440,7 +439,7 @@ bool exprAdd()
     return false;
 }
 
-// exprMul: exprCast exprMulPrim (implicit transformation)
+// exprMul: exprCast exprMulPrim 
 bool exprMul()
 {
     Token *start = iTk;
@@ -581,3 +580,6 @@ bool exprPrimary()
     iTk = start;
     return false;
 }
+
+
+//Finalizat Analizator sintactic, recursivitate la stanga eliminata prin while.
