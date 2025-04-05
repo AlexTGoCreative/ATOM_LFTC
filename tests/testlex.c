@@ -1,15 +1,27 @@
-// program de testare a analizorului lexical, v1.1
+struct Pt{
+	int x;
+	int y;
+	};
+struct Pt points[10];
 
-int main()
-{
+double max(double a,double b){
+	if(a>b)return a;
+		else return b;
+	}
+
+int len(char s[]){
 	int i;
 	i=0;
-	while(i<10){
-		if(i/2==1)puti(i);
-		i=i+1;
+	while(s[i])i=i+1;
+	return i;
+	}
+
+void main(){
+	int i;
+	i=10;
+	while(i!=0){
+		puti(i);
+		i=i/2;
 		}
-	if(4.9==49e-1&&0.49E+1==2.45*2.0)puts("yes");
-	putc('#');
-	puts("alex");	// pentru \n
-	return 0;
-}
+	}
+	

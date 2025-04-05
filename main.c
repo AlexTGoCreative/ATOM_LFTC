@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "lexer.h"
 #include "utils.h"
+#include "parser.h"
 
 int main() {
 
@@ -17,6 +19,7 @@ int main() {
     }
 
     showTokens(tokens, out);
+    parse(tokens);
 
     fclose(out);
     printf("Tokens written to tests/lista-de-atomi.txt\n");

@@ -2,7 +2,7 @@
 $EXECUTABLE = "program.exe"
 
 # Compilează fișierele C
-gcc -o $EXECUTABLE lexer.c main.c utils.c
+gcc -o $EXECUTABLE lexer.c main.c utils.c parser.c
 
 # Verifică dacă compilarea a avut succes
 if ($?) {
