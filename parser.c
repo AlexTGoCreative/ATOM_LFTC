@@ -7,10 +7,10 @@
 #include "utils.h"
 #include "vm.h"
 
-Token *iTk;        // the iterator in the tokens list
-Token *consumedTk; // the last consumed token
+Token *iTk;              // the iterator in the tokens list
+Token *consumedTk;       // the last consumed token
 extern Domain *symTable; // Tabela de simboluri ca stivă de domenii
-Symbol *owner;     // Variabila globală owner
+Symbol *owner;           // Variabila globală owner
 
 char *identifier[] = {"ID", "TYPE_CHAR", "TYPE_DOUBLE", "ELSE", "IF", "TYPE_INT", "RETURN", "STRUCT", "VOID", "WHILE", "INT", "DOUBLE", "CHAR", "STRING", "COMMA", "SEMICOLON", "LPAR", "RPAR", "LBRACKET", "RBRACKET", "LACC", "RACC", "END", "ADD", "SUB", "MUL", "DIV", "DOT", "AND", "OR", "NOT", "ASSIGN", "EQUAL", "NOTEQ", "LESS", "LESSEQ", "GREATER", "GREATEREQ"};
 
@@ -20,7 +20,7 @@ void tkerr(const char *fmt, ...)
     va_list va;
     va_start(va, fmt);
     vfprintf(stderr, fmt, va);
-    va_end(va); 
+    va_end(va);
     fprintf(stderr, "\n");
     exit(EXIT_FAILURE);
 }
@@ -48,53 +48,75 @@ bool consume(int code)
 bool unit()
 {
     printf("# unit\n");
-    for(;;) {
-        if(structDef()) {}
-        else if(fnDef()) {}
-        else if(varDef()) {}
-        else break;
+    for (;;)
+    {
+        if (structDef())
+        {
+        }
+        else if (fnDef())
+        {
+        }
+        else if (varDef())
+        {
+        }
+        else
+            break;
     }
-    if(consume(END)) {
+    if (consume(END))
+    {
         return true;
     }
     return false;
 }
 
-// structDef: STRUCT ID LACC varDef* RACC SEMICOLON
+// structDef: STRUCT ID[tkName] LACC {semantic actions} varDef* RACC SEMICOLON {semantic actions}
 bool structDef()
 {
     printf("# structDef\n");
     Token *start = iTk;
-    if(consume(STRUCT)) {
-        if(consume(ID)) {
-            Token *tkName = consumedTk;
-            Symbol *s = findSymbolInDomain(symTable, tkName->text);
-            if(s) tkerr("symbol redefinition: %s", tkName->text);
-            s = addSymbolToDomain(symTable, newSymbol(tkName->text, SK_STRUCT));
-            s->type.tb = TB_STRUCT;
-            s->type.s = s;
-            s->type.n = -1;
-            pushDomain();
-            owner = s;
-            
-            if(consume(LACC)) {
-                while(varDef()) {}
-                if(consume(RACC)) {
-                    if(consume(SEMICOLON)) {
+    if (consume(STRUCT))
+    {
+        if (consume(ID))
+        {
+            Token *tkName = consumedTk; // Capture the ID token before LACC
+            if (consume(LACC))
+            {
+                // Semantic actions from the specification
+                Symbol *s = findSymbolInDomain(symTable, tkName->text);
+                if (s) tkerr("symbol redefinition: %s", tkName->text);
+                s = addSymbolToDomain(symTable, newSymbol(tkName->text, SK_STRUCT));
+                s->type.tb = TB_STRUCT;
+                s->type.s = s;
+                s->type.n = -1;
+                pushDomain();
+                owner = s;
+
+                while (varDef()) // Zero or more variable definitions
+                {
+                    // varDef already checks for duplicate variable names within the domain
+                }
+                if (consume(RACC))
+                {
+                    if (consume(SEMICOLON))
+                    {
+                        // Semantic actions after completing the structure
                         owner = NULL;
                         dropDomain();
                         return true;
                     }
-                    else {
+                    else
+                    {
                         tkerr("lipseste ; dupa }");
                     }
                 }
-                else {
+                else
+                {
                     tkerr("lipseste } dupa {");
                 }
             }
         }
-        else {
+        else
+        {
             tkerr("lipseste numele structurii dupa struct");
         }
     }
@@ -108,40 +130,52 @@ bool varDef()
     printf("# varDef\n");
     Token *start = iTk;
     Type t;
-    if(typeBase(&t)) {
-        if(consume(ID)) {
+    if (typeBase(&t))
+    {
+        if (consume(ID))
+        {
             Token *tkName = consumedTk;
-            if(arrayDecl(&t)) {
-                if(t.n == 0) tkerr("a vector variable must have a specified dimension");
+            if (arrayDecl(&t))
+            {
+                if (t.n == 0)
+                    tkerr("a vector variable must have a specified dimension");
             }
-            if(consume(SEMICOLON)) {
+            if (consume(SEMICOLON))
+            {
                 Symbol *var = findSymbolInDomain(symTable, tkName->text);
-                if(var) tkerr("symbol redefinition: %s", tkName->text);
+                if (var)
+                    tkerr("symbol redefinition: %s", tkName->text);
                 var = newSymbol(tkName->text, SK_VAR);
                 var->type = t;
                 var->owner = owner;
                 addSymbolToDomain(symTable, var);
-                if(owner) {
-                    switch(owner->kind) {
-                        case SK_FN:
-                            var->varIdx = symbolsLen(owner->fn.locals);
-                            addSymbolToList(&owner->fn.locals, dupSymbol(var));
-                            break;
-                        case SK_STRUCT:
-                            var->varIdx = typeSize(&owner->type);
-                            addSymbolToList(&owner->structMembers, dupSymbol(var));
-                            break;
+                if (owner)
+                {
+                    switch (owner->kind)
+                    {
+                    case SK_FN:
+                        var->varIdx = symbolsLen(owner->fn.locals);
+                        addSymbolToList(&owner->fn.locals, dupSymbol(var));
+                        break;
+                    case SK_STRUCT:
+                        var->varIdx = typeSize(&owner->type);
+                        addSymbolToList(&owner->structMembers, dupSymbol(var));
+                        break;
                     }
-                } else {
+                }
+                else
+                {
                     var->varMem = safeAlloc(typeSize(&t));
                 }
                 return true;
             }
-            else {
+            else
+            {
                 tkerr("lipseste ; la final de linie");
             }
         }
-        else {
+        else
+        {
             tkerr("lipseste identificatorul dupa tip");
         }
     }
@@ -154,24 +188,30 @@ bool typeBase(Type *t)
 {
     printf("# typeBase\n");
     t->n = -1;
-    if(consume(TYPE_INT)) {
+    if (consume(TYPE_INT))
+    {
         t->tb = TB_INT;
         return true;
     }
-    if(consume(TYPE_DOUBLE)) {
+    if (consume(TYPE_DOUBLE))
+    {
         t->tb = TB_DOUBLE;
         return true;
     }
-    if(consume(TYPE_CHAR)) {
+    if (consume(TYPE_CHAR))
+    {
         t->tb = TB_CHAR;
         return true;
     }
-    if(consume(STRUCT)) {
-        if(consume(ID)) {
+    if (consume(STRUCT))
+    {
+        if (consume(ID))
+        {
             Token *tkName = consumedTk;
             t->tb = TB_STRUCT;
             t->s = findSymbol(tkName->text);
-            if(!t->s) tkerr("structura nedefinita: %s", tkName->text);
+            if (!t->s)
+                tkerr("structura nedefinita: %s", tkName->text);
             return true;
         }
         tkerr("lipseste numele structurii dupa struct");
@@ -184,17 +224,23 @@ bool arrayDecl(Type *t)
 {
     printf("# arrayDecl\n");
     Token *start = iTk;
-    if(consume(LBRACKET)) {
-        if(consume(INT)) {
+    if (consume(LBRACKET))
+    {
+        if (consume(INT))
+        {
             Token *tkSize = consumedTk;
             t->n = tkSize->i;
-        } else {
+        }
+        else
+        {
             t->n = 0;
         }
-        if(consume(RBRACKET)) {
+        if (consume(RBRACKET))
+        {
             return true;
         }
-        else {
+        else
+        {
             tkerr("lipseste ] dupa [ sau dupa dimensiunea specificata");
         }
     }
@@ -208,35 +254,47 @@ bool fnDef()
     printf("# fnDef\n");
     Token *start = iTk;
     Type t;
-    if(typeBase(&t) || consume(VOID)) {
-        if(!t.tb) t.tb = TB_VOID;
-        if(consume(ID)) {
+    if (typeBase(&t) || consume(VOID))
+    {
+        if (!t.tb)
+            t.tb = TB_VOID;
+        if (consume(ID))
+        {
             Token *tkName = consumedTk;
-            if(consume(LPAR)) {
+            if (consume(LPAR))
+            {
                 Symbol *fn = findSymbolInDomain(symTable, tkName->text);
-                if(fn) tkerr("symbol redefinition: %s", tkName->text);
+                if (fn)
+                    tkerr("symbol redefinition: %s", tkName->text);
                 fn = newSymbol(tkName->text, SK_FN);
                 fn->type = t;
                 addSymbolToDomain(symTable, fn);
                 owner = fn;
                 pushDomain();
 
-                if(fnParam()) {
-                    while(consume(COMMA)) {
-                        if(!fnParam()) tkerr("lipseste parametru dupa ,");
+                if (fnParam())
+                {
+                    while (consume(COMMA))
+                    {
+                        if (!fnParam())
+                            tkerr("lipseste parametru dupa ,");
                     }
                 }
-                if(consume(RPAR)) {
-                    if(stmCompound(false)) {
+                if (consume(RPAR))
+                {
+                    if (stmCompound(false))
+                    {
                         dropDomain();
                         owner = NULL;
                         return true;
                     }
-                    else {
+                    else
+                    {
                         tkerr("lipseste corpul functiei");
                     }
                 }
-                else {
+                else
+                {
                     tkerr("conditie invalida pentru declararea functiei sau lipseste ) dupa (");
                 }
             }
@@ -252,14 +310,18 @@ bool fnParam()
     printf("# fnParam\n");
     Token *start = iTk;
     Type t;
-    if(typeBase(&t)) {
-        if(consume(ID)) {
+    if (typeBase(&t))
+    {
+        if (consume(ID))
+        {
             Token *tkName = consumedTk;
-            if(arrayDecl(&t)) {
+            if (arrayDecl(&t))
+            {
                 t.n = 0; // Parametrii vectori devin fără dimensiune
             }
             Symbol *param = findSymbolInDomain(symTable, tkName->text);
-            if(param) tkerr("symbol redefinition: %s", tkName->text);
+            if (param)
+                tkerr("symbol redefinition: %s", tkName->text);
             param = newSymbol(tkName->text, SK_PARAM);
             param->type = t;
             param->owner = owner;
@@ -268,7 +330,8 @@ bool fnParam()
             addSymbolToList(&owner->fn.params, dupSymbol(param));
             return true;
         }
-        else {
+        else
+        {
             tkerr("lipseste identificatorul parametrului in antetul functiei");
         }
     }
@@ -280,73 +343,102 @@ bool fnParam()
 bool stm()
 {
     printf("# stm\n");
-    if(stmCompound(true)) {
+    if (stmCompound(true))
+    {
         return true;
     }
     Token *start = iTk;
-    if(consume(IF)) {
-        if(consume(LPAR)) {
-            if(expr()) {
-                if(consume(RPAR)) {
-                    if(stm()) {
-                        if(consume(ELSE)) {
-                            if(!stm()) tkerr("lipseste continutul ramurii else");
+    if (consume(IF))
+    {
+        if (consume(LPAR))
+        {
+            if (expr())
+            {
+                if (consume(RPAR))
+                {
+                    if (stm())
+                    {
+                        if (consume(ELSE))
+                        {
+                            if (!stm())
+                                tkerr("lipseste continutul ramurii else");
                         }
                         return true;
                     }
-                    else {
+                    else
+                    {
                         tkerr("lipseste continului ramurii if");
                     }
                 }
-                else {
+                else
+                {
                     tkerr("conditie invalida pentru if sau lipseste ) dupa expresia din if");
                 }
             }
-            else {
+            else
+            {
                 tkerr("lipseste expresia de dupa ( din if");
             }
         }
-        else {
+        else
+        {
             tkerr("lipseste ( dupa if");
         }
     }
     iTk = start;
-    if(consume(WHILE)) {
-        if(consume(LPAR)) {
-            if(expr()) {
-                if(consume(RPAR)) {
-                    if(stm()) {
+    if (consume(WHILE))
+    {
+        if (consume(LPAR))
+        {
+            if (expr())
+            {
+                if (consume(RPAR))
+                {
+                    if (stm())
+                    {
                         return true;
                     }
-                    else {
+                    else
+                    {
                         tkerr("lipseste corpul lui while");
                     }
                 }
-                else {
+                else
+                {
                     tkerr("conditie invalida pentru while sau lipseste ) dupa expresia din while");
                 }
             }
-            else {
+            else
+            {
                 tkerr("lipseste expresia de dupa ( din while");
             }
         }
-        else {
+        else
+        {
             tkerr("lipseste ( dupa while");
         }
     }
     iTk = start;
-    if(consume(RETURN)) {
-        if(expr()) {}
-        if(consume(SEMICOLON)) {
+    if (consume(RETURN))
+    {
+        if (expr())
+        {
+        }
+        if (consume(SEMICOLON))
+        {
             return true;
         }
-        else {
+        else
+        {
             tkerr("lipseste ; dupa return sau expresie return");
         }
     }
     iTk = start;
-    if(expr()) {}
-    if(consume(SEMICOLON)) {
+    if (expr())
+    {
+    }
+    if (consume(SEMICOLON))
+    {
         return true;
     }
     iTk = start;
@@ -358,14 +450,21 @@ bool stmCompound(bool newDomain)
 {
     printf("# stmCompound\n");
     Token *start = iTk;
-    if(consume(LACC)) {
-        if(newDomain) pushDomain();
-        while(varDef() || stm()) {}
-        if(consume(RACC)) {
-            if(newDomain) dropDomain();
+    if (consume(LACC))
+    {
+        if (newDomain)
+            pushDomain();
+        while (varDef() || stm())
+        {
+        }
+        if (consume(RACC))
+        {
+            if (newDomain)
+                dropDomain();
             return true;
         }
-        else {
+        else
+        {
             tkerr("lipseste } dupa {");
         }
     }
@@ -377,7 +476,8 @@ bool stmCompound(bool newDomain)
 bool expr()
 {
     printf("# expr\n");
-    if(exprAssign()) {
+    if (exprAssign())
+    {
         return true;
     }
     return false;
@@ -388,18 +488,23 @@ bool exprAssign()
 {
     printf("# exprAssign\n");
     Token *start = iTk;
-    if(exprUnary()) {
-        if(consume(ASSIGN)) {
-            if(exprAssign()) {
+    if (exprUnary())
+    {
+        if (consume(ASSIGN))
+        {
+            if (exprAssign())
+            {
                 return true;
             }
-            else {
+            else
+            {
                 tkerr("lipseste expresie dupa =");
             }
         }
     }
     iTk = start;
-    if(exprOr()) {
+    if (exprOr())
+    {
         return true;
     }
     return false;
@@ -410,9 +515,12 @@ bool exprOrPrim()
 {
     printf("# exprOrPrim\n");
     Token *start = iTk;
-    if(consume(OR)) {
-        if(exprAnd()) {
-            if(exprOrPrim()) {
+    if (consume(OR))
+    {
+        if (exprAnd())
+        {
+            if (exprOrPrim())
+            {
                 return true;
             }
         }
@@ -426,8 +534,10 @@ bool exprOr()
 {
     printf("# exprOr\n");
     Token *start = iTk;
-    if(exprAnd()) {
-        if(exprOrPrim()) {
+    if (exprAnd())
+    {
+        if (exprOrPrim())
+        {
             return true;
         }
     }
@@ -440,9 +550,12 @@ bool exprAndPrim()
 {
     printf("# exprAndPrim\n");
     Token *start = iTk;
-    if(consume(AND)) {
-        if(exprEq()) {
-            if(exprAndPrim()) {
+    if (consume(AND))
+    {
+        if (exprEq())
+        {
+            if (exprAndPrim())
+            {
                 return true;
             }
         }
@@ -456,8 +569,10 @@ bool exprAnd()
 {
     printf("# exprAnd\n");
     Token *start = iTk;
-    if(exprEq()) {
-        if(exprAndPrim()) {
+    if (exprEq())
+    {
+        if (exprAndPrim())
+        {
             return true;
         }
     }
@@ -470,9 +585,12 @@ bool exprEqPrim()
 {
     printf("# exprEqPrim\n");
     Token *start = iTk;
-    if(consume(EQUAL) || consume(NOTEQ)) {
-        if(exprRel()) {
-            if(exprEqPrim()) {
+    if (consume(EQUAL) || consume(NOTEQ))
+    {
+        if (exprRel())
+        {
+            if (exprEqPrim())
+            {
                 return true;
             }
         }
@@ -486,8 +604,10 @@ bool exprEq()
 {
     printf("# exprEq\n");
     Token *start = iTk;
-    if(exprRel()) {
-        if(exprEqPrim()) {
+    if (exprRel())
+    {
+        if (exprEqPrim())
+        {
             return true;
         }
     }
@@ -500,9 +620,12 @@ bool exprRelPrim()
 {
     printf("# exprRelPrim\n");
     Token *start = iTk;
-    if(consume(LESS) || consume(LESSEQ) || consume(GREATER) || consume(GREATEREQ)) {
-        if(exprAdd()) {
-            if(exprRelPrim()) {
+    if (consume(LESS) || consume(LESSEQ) || consume(GREATER) || consume(GREATEREQ))
+    {
+        if (exprAdd())
+        {
+            if (exprRelPrim())
+            {
                 return true;
             }
         }
@@ -516,8 +639,10 @@ bool exprRel()
 {
     printf("# exprRel\n");
     Token *start = iTk;
-    if(exprAdd()) {
-        if(exprRelPrim()) {
+    if (exprAdd())
+    {
+        if (exprRelPrim())
+        {
             return true;
         }
     }
@@ -530,9 +655,12 @@ bool exprAddPrim()
 {
     printf("# exprAddPrim\n");
     Token *start = iTk;
-    if(consume(ADD) || consume(SUB)) {
-        if(exprMul()) {
-            if(exprAddPrim()) {
+    if (consume(ADD) || consume(SUB))
+    {
+        if (exprMul())
+        {
+            if (exprAddPrim())
+            {
                 return true;
             }
         }
@@ -546,8 +674,10 @@ bool exprAdd()
 {
     printf("# exprAdd\n");
     Token *start = iTk;
-    if(exprMul()) {
-        if(exprAddPrim()) {
+    if (exprMul())
+    {
+        if (exprAddPrim())
+        {
             return true;
         }
     }
@@ -560,9 +690,12 @@ bool exprMulPrim()
 {
     printf("# exprMulPrim\n");
     Token *start = iTk;
-    if(consume(MUL) || consume(DIV)) {
-        if(exprCast()) {
-            if(exprMulPrim()) {
+    if (consume(MUL) || consume(DIV))
+    {
+        if (exprCast())
+        {
+            if (exprMulPrim())
+            {
                 return true;
             }
         }
@@ -576,8 +709,10 @@ bool exprMul()
 {
     printf("# exprMul\n");
     Token *start = iTk;
-    if(exprCast()) {
-        if(exprMulPrim()) {
+    if (exprCast())
+    {
+        if (exprMulPrim())
+        {
             return true;
         }
     }
@@ -590,22 +725,30 @@ bool exprCast()
 {
     printf("# exprCast\n");
     Token *start = iTk;
-    if(consume(LPAR)) {
+    if (consume(LPAR))
+    {
         Type t;
-        if(typeBase(&t)) {
-            if(arrayDecl(&t)) {}
-            if(consume(RPAR)) {
-                if(exprCast()) {
+        if (typeBase(&t))
+        {
+            if (arrayDecl(&t))
+            {
+            }
+            if (consume(RPAR))
+            {
+                if (exprCast())
+                {
                     return true;
                 }
             }
-            else {
+            else
+            {
                 tkerr("lipseste ) dupa tipul spre care se face conversia");
             }
         }
     }
     iTk = start;
-    if(exprUnary()) {
+    if (exprUnary())
+    {
         return true;
     }
     iTk = start;
@@ -617,13 +760,16 @@ bool exprUnary()
 {
     printf("# exprUnary\n");
     Token *start = iTk;
-    if(consume(SUB) || consume(NOT)) {
-        if(exprUnary()) {
+    if (consume(SUB) || consume(NOT))
+    {
+        if (exprUnary())
+        {
             return true;
         }
     }
     iTk = start;
-    if(exprPostfix()) {
+    if (exprPostfix())
+    {
         return true;
     }
     iTk = start;
@@ -635,10 +781,14 @@ bool exprPostfixPrim()
 {
     printf("# exprPostfixPrim\n");
     Token *start = iTk;
-    if(consume(LBRACKET)) {
-        if(expr()) {
-            if(consume(RBRACKET)) {
-                if(exprPostfixPrim()) {
+    if (consume(LBRACKET))
+    {
+        if (expr())
+        {
+            if (consume(RBRACKET))
+            {
+                if (exprPostfixPrim())
+                {
                     return true;
                 }
             }
@@ -647,9 +797,12 @@ bool exprPostfixPrim()
         tkerr("lipseste expresie dupa [");
     }
     iTk = start;
-    if(consume(DOT)) {
-        if(consume(ID)) {
-            if(exprPostfixPrim()) {
+    if (consume(DOT))
+    {
+        if (consume(ID))
+        {
+            if (exprPostfixPrim())
+            {
                 return true;
             }
         }
@@ -662,8 +815,10 @@ bool exprPostfix()
 {
     printf("# exprPostfix\n");
     Token *start = iTk;
-    if(exprPrimary()) {
-        if(exprPostfixPrim()) {
+    if (exprPrimary())
+    {
+        if (exprPostfixPrim())
+        {
             return true;
         }
     }
@@ -676,38 +831,52 @@ bool exprPrimary()
 {
     printf("# exprPrimary\n");
     Token *start = iTk;
-    if(consume(ID)) {
-        if(consume(LPAR)) {
-            if(expr()) {
-                while(consume(COMMA)) {
-                    if(!expr()) tkerr("lipseste expresie dupa ,");
+    if (consume(ID))
+    {
+        if (consume(LPAR))
+        {
+            if (expr())
+            {
+                while (consume(COMMA))
+                {
+                    if (!expr())
+                        tkerr("lipseste expresie dupa ,");
                 }
             }
-            if(consume(RPAR)) {
+            if (consume(RPAR))
+            {
                 return true;
             }
-            else {
+            else
+            {
                 tkerr("apel de functie incorect sau lipseste ) dupa (");
             }
         }
         return true;
     }
     iTk = start;
-    if(consume(INT)) {
+    if (consume(INT))
+    {
         return true;
     }
-    if(consume(DOUBLE)) {
+    if (consume(DOUBLE))
+    {
         return true;
     }
-    if(consume(CHAR)) {
+    if (consume(CHAR))
+    {
         return true;
     }
-    if(consume(STRING)) {
+    if (consume(STRING))
+    {
         return true;
     }
-    if(consume(LPAR)) {
-        if(expr()) {
-            if(consume(RPAR)) {
+    if (consume(LPAR))
+    {
+        if (expr())
+        {
+            if (consume(RPAR))
+            {
                 return true;
             }
         }
@@ -721,7 +890,8 @@ void parse(Token *tokens)
     iTk = tokens;
     owner = NULL;
     pushDomain(); // Creează domeniul global
-    if(!unit()) tkerr("syntax error");
+    if (!unit())
+        tkerr("syntax error");
     showDomain(symTable, "global"); // Afișează domeniul global
-    dropDomain(); // Șterge domeniul global
+    dropDomain();                   // Șterge domeniul global
 }
