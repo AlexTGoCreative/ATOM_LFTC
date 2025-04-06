@@ -28,7 +28,7 @@ char *tkCodeName(int code)
 bool consume(int code)
 {
     printf("consume(%s)", tkCodeName(code));
-    if (iTk->code == code || identifier[code] == "END")
+    if (iTk->code == code)
     {
         consumedTk = iTk;
         iTk = iTk->next;

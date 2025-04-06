@@ -220,6 +220,8 @@ Token *tokenize(const char *pch)
                     addTk(ELSE);
                 else if (strcmp(text, "if") == 0)
                     addTk(IF);
+                else if (strcmp(text, "double") == 0)
+                    addTk(TYPE_DOUBLE);
                 else if (strcmp(text, "return") == 0)
                     addTk(RETURN);
                 else if (strcmp(text, "struct") == 0)

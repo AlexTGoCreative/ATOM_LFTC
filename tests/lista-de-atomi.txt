@@ -16,13 +16,13 @@
 5   INT : 10
 5   RBRACKET
 5   SEMICOLON
-6   ID : double
+6   TYPE_DOUBLE
 6   ID : max
 6   LPAR
-6   ID : double
+6   TYPE_DOUBLE
 6   ID : a
 6   COMMA
-6   ID : double
+6   TYPE_DOUBLE
 6   ID : b
 6   RPAR
 6   LACC
