@@ -5,7 +5,7 @@
 #include "lexer.h"
 #include "utils.h"
 #include "parser.h"
-
+#include "ad.h"
 int main() {
 
     const char *input = loadFile("tests/testlex.c");
