@@ -3,8 +3,7 @@ struct Pt{
 	int y;
 	};
 struct Pt points[10];
-
-double max(double a,double b){
+double max ( double a,double b){
 	if(a>b)return a;
 		else return b;
 	}
