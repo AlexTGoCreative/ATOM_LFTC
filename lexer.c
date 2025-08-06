@@ -107,6 +107,10 @@ Token *tokenize(const char *pch)
             addTk(MUL);
             pch++;
             break;
+        case '.':
+            addTk(DOT);
+            pch++;
+            break;
         case '/':
             if (pch[1] == '/')
             { // Linie comentariu
